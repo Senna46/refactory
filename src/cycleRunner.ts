@@ -289,7 +289,7 @@ export class CycleRunner {
       return existing;
     }
 
-    const title = `refactory: ${truncate(params.theme, 70)}`;
+    const title = `refactory: ${truncate(params.theme, 90)}`;
     const body = buildPullRequestBody(
       params.theme,
       params.notes,

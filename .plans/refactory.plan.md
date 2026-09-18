@@ -9,8 +9,9 @@ Name: **refactory** (refactor + factory). Independent from Fixooly and bugbot-ho
 ```text
 Purpose:
   Cursor / Codex feature work scatters UI pieces and helpers.
-  Once a week, read each allowlisted repository, pick one cleanup
-  theme that does not change behavior, and open a PR to the default branch.
+  Once a week, read each allowlisted repository, apply every
+  high-value cleanup theme that does not change behavior, and open
+  one PR to the default branch.
 
 Repository:
   GitHub: Senna46/refactory (private)
@@ -42,7 +43,7 @@ Pull requests:
   - Author Senna46 (PAT) so Cursor Bugbot runs
   - At most one open managed PR per repo
   - No PR when the diff is empty
-  - One theme per repo per cycle
+  - Multiple behavior-preserving themes per repo per cycle
   - Light verify only: git diff --check (no pnpm install)
 
 Auth:
@@ -61,7 +62,7 @@ flowchart TD
   Cycle -->|no| Open{Open REFACTORY_MANAGED PR?}
   Open -->|yes| SkipOpen[Skip repo]
   Open -->|no| Clone[Clone or fetch default branch]
-  Clone --> Claude[claude -p: explore then one theme]
+  Clone --> Claude[claude -p: explore then multiple themes]
   Claude --> Empty{git diff empty?}
   Empty -->|yes| Record[Record last_run, no PR]
   Empty -->|no| Check[git diff --check]

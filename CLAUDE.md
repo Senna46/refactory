@@ -5,9 +5,9 @@ Instructions for Claude Code when working on this codebase.
 ## Project Overview
 
 refactory is a TypeScript job that, once a week, explores allowlisted
-GitHub repositories, applies one behavior-preserving cleanup theme with
-`claude -p`, and opens a Senna46-authored pull request against the
-default branch.
+GitHub repositories, applies every high-value behavior-preserving
+cleanup that fits in the session with `claude -p`, and opens a
+Senna46-authored pull request against the default branch.
 
 It does not detect product bugs. Fixooly still fixes Cursor Bugbot
 findings. bugbot-host still mirrors other people's PRs.
@@ -31,7 +31,7 @@ findings. bugbot-host still mirrors other people's PRs.
  logger.ts          Structured logger with level support
  githubClient.ts    App + PAT Octokit wrapper
  gitOps.ts          Clone, dated branch, commit, push
- refactorRunner.ts  claude -p one-theme cleanup
+ refactorRunner.ts  claude -p multi-theme cleanup
  verify.ts          git diff --check and unsafe-path guard
  cycleRunner.ts     Per-repo skip / run / record
  schedule.ts        Last Sunday 00:00 JST helpers
