@@ -147,7 +147,7 @@ export class GitOps {
       if (!match || match[0].length <= match[1].length) {
         continue;
       }
-      const eol = content.includes("\r\n") ? "\r\n" : "\n";
+      const eol = match[0].includes("\r\n") ? "\r\n" : "\n";
       const next = content.slice(0, content.length - match[0].length) + eol;
       await writeFile(absPath, next);
       stripped.push(file);
