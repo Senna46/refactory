@@ -46,7 +46,7 @@ export class RefactorRunner {
     owner: string,
     repo: string
   ): Promise<ClaudeRefactorResult> {
-    logger.info("Running claude -p for a one-theme refactor.", {
+    logger.info("Running claude -p for a multi-theme refactor.", {
       repoDir,
       owner,
       repo,
