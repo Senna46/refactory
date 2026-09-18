@@ -120,6 +120,7 @@ export class RefactorRunner {
 
     return new Promise<string>((resolve, reject) => {
       let settled = false;
+      let timedOut = false;
 
       const child = spawn("claude", args, {
         cwd: repoDir,
@@ -131,6 +132,7 @@ export class RefactorRunner {
 
       const killTimer = setTimeout(() => {
         if (settled) return;
+        timedOut = true;
         logger.warn("claude -p timed out, sending SIGTERM.", {
           timeoutMs,
           repoDir,
@@ -161,12 +163,12 @@ export class RefactorRunner {
         if (settled) return;
         settled = true;
 
-        if (signal === "SIGTERM" || signal === "SIGKILL") {
-          reject(
-            new Error(
-              `claude -p refactor timed out after ${timeoutMs / 1000}s (repoDir=${repoDir}).`
-            )
+        if (timedOut) {
+          logger.warn(
+            "claude -p timed out; keeping any cleanups already written to disk.",
+            { timeoutMs, repoDir, signal }
           );
+          resolve(stdout);
           return;
         }
         if (code !== 0) {
