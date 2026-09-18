@@ -89,13 +89,13 @@ export class GitOps {
     const output = await this.execGit(repoDir, ["status", "--porcelain"]);
     return output
       .split("\n")
-      .map((line) => line.trim())
       .filter((line) => line.length > 0)
-      .map((line) => line.replace(/^..\s+/, "").replace(/^.* -> /, ""));
+      .map((line) => line.substring(3).replace(/^.* -> /, ""));
   }
 
   async diffCheck(repoDir: string): Promise<{ ok: boolean; output: string }> {
     try {
+      await this.execGit(repoDir, ["add", "-A"]);
       const output = await this.execGit(repoDir, ["diff", "--check", "HEAD"]);
       return { ok: true, output: output.trim() };
     } catch (error) {
