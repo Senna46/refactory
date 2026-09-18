@@ -10,7 +10,7 @@ The job starts every Sunday at 00:00 JST, looks at each allowlisted repository, 
 - `d6e-ai/d6e-auth`
 - `d6e-ai/ai-gateway`
 - `d6e-products/d6e-valuation`
-- `d6e-ai/ai-keiri`
+- `d6e-products/ai-keiri`
 
 ## Behavior
 
