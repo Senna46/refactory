@@ -1,9 +1,10 @@
-// Claude-driven one-theme refactor for refactory.
+// Claude-driven multi-theme refactor for refactory.
 // Spawns `claude -p` in the cloned repository, lets it explore the tree
-// and edit a single behavior-preserving cluster, then returns a summary
-// for the pull request body. Does not run git add/commit/push.
-// Limitations: 45-minute default timeout. Claude may make no edits, or
-//   may pick a weak theme; the caller records that and tries next week.
+// and apply every high-value behavior-preserving cleanup that fits in
+// the timeout, then returns a summary for the pull request body.
+// Does not run git add/commit/push.
+// Limitations: 45-minute default timeout. Claude may still make no
+//   edits, or may leave remaining clusters for a later week.
 
 import { spawn } from "child_process";
 
@@ -78,16 +79,19 @@ export class RefactorRunner {
       `Repository: ${owner}/${repo}`,
       "",
       "Read AGENTS.md, CLAUDE.md, and README.md first when they exist.",
-      "Explore the tree enough to find the highest-value cluster of scattered UI,",
-      "duplicated helpers, dead exports, or files that drifted out of the existing layout.",
+      "Explore the tree thoroughly: duplicated UI, duplicated helpers, dead exports,",
+      "and files that drifted out of the existing layout. Do not stop at the first match.",
       "",
-      "Then make ONE behavior-preserving cleanup. Stop after that theme.",
+      "Then apply every high-value behavior-preserving cleanup that you can finish safely",
+      "in this session. Multiple independent themes in one pass are expected and preferred",
+      "over a single tiny extract. Keep going until remaining work is low-value or unsafe,",
+      "or until you are out of time.",
       "",
       "Rules:",
       "- Do not change user-visible behavior, routes, public APIs, DB schema, or env meaning.",
-      "- Do not drive-by rewrite unrelated files.",
       "- Do not run a formatter-only pass and call that a cleanup.",
-      "- Do not rewrite a whole monorepo in one session.",
+      "- Do not rewrite a whole monorepo or redesign the architecture in one session.",
+      "- Each theme must be a real cluster (extract, dead-code removal, or layout cleanup), not a drive-by style nit.",
       "- New files are allowed only to extract a duplicated piece into one shared place.",
       "- In Svelte files, never put comments before the <script tag; they render on the page.",
       "- Do not run git add, git commit, git push, git checkout, or git merge.",
@@ -99,7 +103,7 @@ export class RefactorRunner {
       "If there is nothing safe and useful to clean, make no edits.",
       "",
       "When finished, print exactly:",
-      "SUMMARY: <one line naming the single theme, or none>",
+      "SUMMARY: <semicolon-separated themes, or none>",
       "CHANGED_FILES:",
       "- path/relative/to/repo",
       "(Use a single dash line `- (none)` when you made no edits.)",
@@ -116,6 +120,7 @@ export class RefactorRunner {
 
     return new Promise<string>((resolve, reject) => {
       let settled = false;
+      let timedOut = false;
 
       const child = spawn("claude", args, {
         cwd: repoDir,
@@ -127,6 +132,7 @@ export class RefactorRunner {
 
       const killTimer = setTimeout(() => {
         if (settled) return;
+        timedOut = true;
         logger.warn("claude -p timed out, sending SIGTERM.", {
           timeoutMs,
           repoDir,
@@ -157,12 +163,12 @@ export class RefactorRunner {
         if (settled) return;
         settled = true;
 
-        if (signal === "SIGTERM" || signal === "SIGKILL") {
-          reject(
-            new Error(
-              `claude -p refactor timed out after ${timeoutMs / 1000}s (repoDir=${repoDir}).`
-            )
+        if (timedOut) {
+          logger.warn(
+            "claude -p timed out; keeping any cleanups already written to disk.",
+            { timeoutMs, repoDir, signal }
           );
+          resolve(stdout);
           return;
         }
         if (code !== 0) {

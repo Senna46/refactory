@@ -1,7 +1,7 @@
 {
   "name": "refactory",
   "version": "0.1.0",
-  "description": "Weekly behavior-preserving refactoring daemon that opens one themed PR per allowlisted repository",
+  "description": "Weekly behavior-preserving refactoring daemon that opens one multi-theme PR per allowlisted repository",
   "type": "module",
   "main": "dist/main.js",
   "scripts": {
