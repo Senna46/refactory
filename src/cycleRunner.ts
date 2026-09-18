@@ -21,7 +21,11 @@ import type {
   RepoRef,
   TrackedPullRequest,
 } from "./types.js";
-import { findUnsafeChangedFiles, verifyWorkingTree } from "./verify.js";
+import {
+  findLeftoverArtifactFiles,
+  findUnsafeChangedFiles,
+  verifyWorkingTree,
+} from "./verify.js";
 
 export class CycleRunner {
   private config: Config;
@@ -166,7 +170,31 @@ export class CycleRunner {
       return;
     }
 
-    const changedFiles = await this.gitOps.changedFiles(repoDir);
+    let changedFiles = await this.gitOps.changedFiles(repoDir);
+    const leftovers = await findLeftoverArtifactFiles(repoDir, changedFiles);
+    if (leftovers.length > 0) {
+      logger.warn("Dropping leftover artifact files before commit.", {
+        repo: repoName,
+        leftovers,
+      });
+      await this.gitOps.removePaths(repoDir, leftovers);
+      changedFiles = changedFiles.filter(
+        (file) => !leftovers.includes(file)
+      );
+      if (changedFiles.length === 0) {
+        logger.info(
+          "Only leftover artifacts were produced; not opening a PR.",
+          { repo: repoName, theme: claudeTheme }
+        );
+        this.record(repo, {
+          status: "no_changes",
+          theme: claudeTheme,
+          branch: branchName,
+        });
+        return;
+      }
+    }
+
     const unsafe = findUnsafeChangedFiles(changedFiles);
     if (unsafe.length > 0) {
       logger.error("Refusing to commit unsafe paths.", {

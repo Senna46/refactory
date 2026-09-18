@@ -7,7 +7,7 @@
 
 import { execFile } from "child_process";
 import { existsSync } from "fs";
-import { mkdir } from "fs/promises";
+import { mkdir, unlink } from "fs/promises";
 import { join } from "path";
 import { promisify } from "util";
 
@@ -166,6 +166,24 @@ export class GitOps {
       allowFailure: true,
     });
     await this.execGit(repoDir, ["clean", "-fd"]);
+  }
+
+  async removePaths(repoDir: string, relativePaths: string[]): Promise<void> {
+    for (const relativePath of relativePaths) {
+      const absPath = join(repoDir, relativePath);
+      try {
+        await unlink(absPath);
+        logger.info("Removed leftover artifact file.", {
+          repoDir,
+          path: relativePath,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(
+          `removePaths failed (repoDir=${repoDir}, path=${relativePath}): ${message}`
+        );
+      }
+    }
   }
 
   private buildGitAuthArgs(token: string): string[] {
