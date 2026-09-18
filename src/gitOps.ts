@@ -156,12 +156,14 @@ export class GitOps {
   }
 
   async discardLocalChanges(repoDir: string): Promise<void> {
-    await this.execGit(repoDir, ["merge", "--abort"]).catch(() => undefined);
-    await this.execGit(repoDir, ["cherry-pick", "--abort"]).catch(
-      () => undefined
-    );
-    await this.execGit(repoDir, ["reset", "--hard", "HEAD"]).catch(() => {
-      // Empty repo or no HEAD yet.
+    await this.execGit(repoDir, ["merge", "--abort"], undefined, {
+      allowFailure: true,
+    });
+    await this.execGit(repoDir, ["cherry-pick", "--abort"], undefined, {
+      allowFailure: true,
+    });
+    await this.execGit(repoDir, ["reset", "--hard", "HEAD"], undefined, {
+      allowFailure: true,
     });
     await this.execGit(repoDir, ["clean", "-fd"]);
   }
@@ -177,7 +179,8 @@ export class GitOps {
   private async execGit(
     cwd: string,
     args: string[],
-    token?: string
+    token?: string,
+    options?: { allowFailure?: boolean }
   ): Promise<string> {
     logger.debug(`git ${args.join(" ")}`, { cwd });
     const fullArgs = token
@@ -195,6 +198,9 @@ export class GitOps {
       });
       return stdout;
     } catch (error) {
+      if (options?.allowFailure) {
+        return "";
+      }
       const execError = error as {
         message?: string;
         stderr?: string;

@@ -16,7 +16,7 @@ import type { Config, LogLevel, RepoRef } from "./types.js";
 const VALID_LOG_LEVELS: LogLevel[] = ["debug", "info", "warn", "error"];
 
 const DEFAULT_REPOS =
-  "d6e-ai/d6e,d6e-ai/d6e-auth,d6e-ai/ai-gateway,d6e-products/d6e-valuation,d6e-ai/ai-keiri";
+  "d6e-ai/d6e,d6e-ai/d6e-auth,d6e-ai/ai-gateway,d6e-products/d6e-valuation,d6e-products/ai-keiri";
 
 const DEFAULT_CLAUDE_TIMEOUT_SECONDS = 2700;
 
