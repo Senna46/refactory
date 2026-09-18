@@ -171,7 +171,12 @@ export class CycleRunner {
     }
 
     let changedFiles = await this.gitOps.changedFiles(repoDir);
-    const leftovers = await findLeftoverArtifactFiles(repoDir, changedFiles);
+    const untrackedFiles = await this.gitOps.untrackedFiles(repoDir);
+    const leftovers = await findLeftoverArtifactFiles(
+      repoDir,
+      changedFiles,
+      untrackedFiles
+    );
     if (leftovers.length > 0) {
       logger.warn("Dropping leftover artifact files before commit.", {
         repo: repoName,

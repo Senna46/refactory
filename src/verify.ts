@@ -53,11 +53,16 @@ const LEFTOVER_CONTENT_MARKERS = [
 
 export async function findLeftoverArtifactFiles(
   repoDir: string,
-  files: string[]
+  files: string[],
+  untrackedFiles: Set<string>
 ): Promise<string[]> {
   const leftovers: string[] = [];
 
   for (const file of files) {
+    if (!untrackedFiles.has(file)) {
+      continue;
+    }
+
     if (isLeftoverPath(file)) {
       leftovers.push(file);
       continue;

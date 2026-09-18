@@ -7,7 +7,7 @@
 
 import { execFile } from "child_process";
 import { existsSync } from "fs";
-import { mkdir, unlink } from "fs/promises";
+import { mkdir, rm } from "fs/promises";
 import { join } from "path";
 import { promisify } from "util";
 
@@ -86,11 +86,30 @@ export class GitOps {
   }
 
   async changedFiles(repoDir: string): Promise<string[]> {
+    const statuses = await this.changedFileStatuses(repoDir);
+    return statuses.map((status) => status.path);
+  }
+
+  async untrackedFiles(repoDir: string): Promise<Set<string>> {
+    const statuses = await this.changedFileStatuses(repoDir);
+    return new Set(
+      statuses
+        .filter((status) => status.code.includes("?"))
+        .map((status) => status.path)
+    );
+  }
+
+  private async changedFileStatuses(
+    repoDir: string
+  ): Promise<{ code: string; path: string }[]> {
     const output = await this.execGit(repoDir, ["status", "--porcelain"]);
     return output
       .split("\n")
       .filter((line) => line.length > 0)
-      .map((line) => line.substring(3).replace(/^.* -> /, ""));
+      .map((line) => ({
+        code: line.substring(0, 2),
+        path: line.substring(3).replace(/^.* -> /, ""),
+      }));
   }
 
   async diffCheck(repoDir: string): Promise<{ ok: boolean; output: string }> {
@@ -172,7 +191,7 @@ export class GitOps {
     for (const relativePath of relativePaths) {
       const absPath = join(repoDir, relativePath);
       try {
-        await unlink(absPath);
+        await rm(absPath, { recursive: true, force: true });
         logger.info("Removed leftover artifact file.", {
           repoDir,
           path: relativePath,
