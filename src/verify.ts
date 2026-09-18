@@ -13,7 +13,17 @@ export async function verifyWorkingTree(
   gitOps: GitOps,
   repoDir: string
 ): Promise<{ ok: boolean; output: string }> {
-  const result = await gitOps.diffCheck(repoDir);
+  let result = await gitOps.diffCheck(repoDir);
+  if (!result.ok && isEofBlankLineOnly(result.output)) {
+    const stripped = await gitOps.stripExtraBlankLinesAtEof(repoDir);
+    logger.warn("Stripped extra blank lines at EOF, then re-running git diff --check.", {
+      repoDir,
+      stripped,
+      previousOutput: result.output.substring(0, 500),
+    });
+    result = await gitOps.diffCheck(repoDir);
+  }
+
   if (!result.ok) {
     logger.error("git diff --check failed.", {
       repoDir,
@@ -23,6 +33,18 @@ export async function verifyWorkingTree(
   }
   logger.info("Light verification passed (git diff --check).", { repoDir });
   return result;
+}
+
+function isEofBlankLineOnly(output: string): boolean {
+  const lines = output
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .filter((line) => !/^command failed:/i.test(line));
+  if (lines.length === 0) {
+    return false;
+  }
+  return lines.every((line) => /new blank line at EOF/i.test(line));
 }
 
 const UNSAFE_PATH_PATTERNS: RegExp[] = [

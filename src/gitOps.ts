@@ -7,7 +7,7 @@
 
 import { execFile } from "child_process";
 import { existsSync } from "fs";
-import { mkdir, rm } from "fs/promises";
+import { mkdir, readFile, rm, writeFile } from "fs/promises";
 import { join } from "path";
 import { promisify } from "util";
 
@@ -113,14 +113,45 @@ export class GitOps {
   }
 
   async diffCheck(repoDir: string): Promise<{ ok: boolean; output: string }> {
+    await this.execGit(repoDir, ["add", "-A"]);
     try {
-      await this.execGit(repoDir, ["add", "-A"]);
       const output = await this.execGit(repoDir, ["diff", "--check", "HEAD"]);
       return { ok: true, output: output.trim() };
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return { ok: false, output: sanitizeGitError(message) };
+      const execError = error as {
+        message?: string;
+        stdout?: string;
+        stderr?: string;
+      };
+      const output = sanitizeGitError(
+        (execError.stdout || execError.stderr || execError.message || "").trim()
+      );
+      return { ok: false, output };
     }
+  }
+
+  async stripExtraBlankLinesAtEof(repoDir: string): Promise<string[]> {
+    const files = await this.changedFiles(repoDir);
+    const stripped: string[] = [];
+
+    for (const file of files) {
+      const absPath = join(repoDir, file);
+      let content: string;
+      try {
+        content = await readFile(absPath, "utf-8");
+      } catch {
+        continue;
+      }
+
+      const next = content.replace(/(?:\r?\n)+$/, "\n");
+      if (next === content) {
+        continue;
+      }
+      await writeFile(absPath, next);
+      stripped.push(file);
+    }
+
+    return stripped;
   }
 
   async commitAll(repoDir: string, message: string): Promise<string> {
