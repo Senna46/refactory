@@ -2,9 +2,11 @@
 
 Weekly, behavior-preserving refactoring for repositories that accumulate scattered UI pieces and helper functions from Cursor and Codex feature work.
 
-The job starts every Sunday at 00:00 JST, looks at each allowlisted repository, applies **every high-value behavior-preserving cleanup** that fits in the session, and opens one pull request against the default branch. After install, run once with `--force` so the first trial does not wait until Sunday.
+The job starts every Sunday at 00:00 JST (or on a schedule you choose), looks at each allowlisted repository, applies **every high-value behavior-preserving cleanup** that fits in the session, and opens one pull request against the default branch. After install, run once with `--force` so the first trial does not wait until Sunday.
 
 ## Default allowlist
+
+Configure `REFACTORY_REPOS` (comma-separated `owner/name`). The bundled default is:
 
 - `d6e-ai/d6e`
 - `d6e-ai/d6e-auth`
@@ -19,14 +21,18 @@ The job starts every Sunday at 00:00 JST, looks at each allowlisted repository, 
 - Skip a repository when `last_run_at` is at or after last Sunday 00:00 JST, unless `--force` (or `REFACTORY_FORCE=1`) is set. A Friday trial therefore still allows the coming Sunday run.
 - Empty diff: no pull request.
 - Verify is `git diff --check` only. Full `pnpm install` / test suites are not run here.
-- Pull requests are created with a Senna46 PAT so Cursor Bugbot can review them.
+- Pull requests are created with a user PAT so [Cursor Bugbot](https://cursor.com/docs/bugbot) can review them.
 
-## Run locally
+## Quick start
 
 ```bash
-cp .env.example .env
-# fill REFACTORY_APP_ID, REFACTORY_PRIVATE_KEY_PATH, REFACTORY_GITHUB_TOKEN
+git clone https://github.com/Senna46/refactory.git
+cd refactory
+
 npm install
+cp .env.example .env
+# Set REFACTORY_APP_ID, REFACTORY_PRIVATE_KEY_PATH, REFACTORY_GITHUB_TOKEN
+
 npm run build
 node dist/main.js --force
 ```
@@ -38,3 +44,12 @@ See [deploy/README.md](deploy/README.md). The LaunchAgent uses `StartCalendarInt
 ## Configuration
 
 All settings use the `REFACTORY_` prefix. See `.env.example`.
+
+## Related projects
+
+- [Fixooly](https://github.com/Senna46/fixooly) — auto-fix Cursor Bugbot findings with Claude Code
+- [bugbot-host](https://github.com/Senna46/bugbot-host) — host other people's PRs so Bugbot can review them
+
+## License
+
+MIT
